@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN" class="loading">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>new post - AvaRye</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="google" content="notranslate" />
+    <meta name="keywords" content="Fechin,"> 
+    <meta name="description" content="macOS + VTK + CLion 配置安装相关本来挺简单一件事但还是踩了一些坑，记一下吧
+（时隔多年再次尝试orz
+macOS 11.3.1 + CLion + VTK 9.0.1_9
+安装步,"> 
+    <meta name="author" content="Ava"> 
+    <link rel="alternative" href="atom.xml" title="AvaRye" type="application/atom+xml"> 
+    <link rel="icon" href="/img/favicon.png"> 
+    
+    
+<link rel="stylesheet" href="/css/diaspora.css">
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body class="loading">
+    <span id="config-title" style="display:none">AvaRye</span>
+    <div id="loader"></div>
+    <div id="single">
+    <div id="top" style="display: block;">
+    <div class="bar" style="width: 0;"></div>
+    <a class="iconfont icon-home image-icon" href="javascript:;" data-url="http://avarye.github.io"></a>
+    <div title="播放/暂停" class="iconfont icon-play"></div>
+    <h3 class="subtitle">new post</h3>
+    <div class="social">
+        <div>
+            <div class="share">
+                <a title="获取二维码" class="iconfont icon-scan" href="javascript:;"></a>
+            </div>
+            <div id="qr"></div>
+        </div>
+    </div>
+    <div class="scrollbar"></div>
+</div>
+
+    <div class="section">
+        <div class="article">
+    <div class='main'>
+        <h1 class="title">new post</h1>
+        <div class="stuff">
+            <span>五月 13, 2021</span>
+            
+
+        </div>
+        <div class="content markdown">
+            <h1 id="macOS-VTK-CLion-配置安装相关"><a href="#macOS-VTK-CLion-配置安装相关" class="headerlink" title="macOS + VTK + CLion 配置安装相关"></a>macOS + VTK + CLion 配置安装相关</h1><p>本来挺简单一件事但还是踩了一些坑，记一下吧</p>
+<p>（时隔多年再次尝试orz</p>
+<p><code>macOS 11.3.1</code> + <code>CLion</code> +<code> VTK 9.0.1_9</code></p>
+<h2 id="安装步骤"><a href="#安装步骤" class="headerlink" title="安装步骤"></a>安装步骤</h2><p>HomeBrew 还是香。虽然他默认安装 VTK 最新版本已经到 9.0.1 了，不过我是新学所以还没遇见什么问题。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew install vtk</span><br></pre></td></tr></table></figure>
+
+<p>最新的 vtk 要用 Qt@5，老版本的代码就可能会有一些问题，不过 HomeBrew 应该会也顺便安装上够用的 Qt@5。</p>
+<p>接下来就是我遇到的一个坑orz当时 CMakeList VTK 相关是这样的</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">find_package</span>(VTK REQUIRED)</span><br><span class="line"><span class="keyword">include</span>(<span class="variable">$&#123;VTK_USE_FILE&#125;</span>)</span><br><span class="line"><span class="keyword">add_executable</span>(<span class="variable">$&#123;PROJECT_NAME&#125;</span> main.cpp)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(<span class="variable">$&#123;PROJECT_NAME&#125;</span> <span class="variable">$&#123;VTK_LIBRARIES&#125;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>结果找不到合适版本的 Qt，说不能用</p>
+<p>![截屏2021-05-12 13.40.54](/Users/ava/0/Visualization/实验1/截屏2021-05-12 13.40.54.png)</p>
+<p>看报错他找到的是 conda 管理下安装的 Qt，解决办法是在前面加一行</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span>(CMAKE_PREFIX_PATH <span class="string">&quot;/usr/local/Cellar/qt@5/5.15.2&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>翻 CMake 手册知道这个的作用是提供一个根目录供 FIND_XXX() 命令在其中查找相应的文件。就是把 brew 管理的 Qt@5 的路径加进去。没有 Qt5 就去装一个版本够用的。brew 现在默认已经是 Qt6 了。</p>
+<p>这时候就可以了。跑测试代码的时候我拿到的代码渲染不出窗口来，不知道是不是版本的问题，参照一个教学项目的代码动了一下之后能跑出来了。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;vtkRenderWindow.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;vtkSmartPointer.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;vtkRenderWindowInteractor.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    vtkSmartPointer&lt;vtkRenderWindow&gt; renWin = vtkSmartPointer&lt;vtkRenderWindow&gt;::<span class="built_in">New</span>();</span><br><span class="line">    vtkNew&lt;vtkRenderWindowInteractor&gt; iren;</span><br><span class="line">    iren-&gt;<span class="built_in">SetRenderWindow</span>(renWin);</span><br><span class="line">    renWin-&gt;<span class="built_in">Render</span>();</span><br><span class="line">    iren-&gt;<span class="built_in">Start</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>效果就这样</p>
+<img src="/Users/ava/0/Visualization/实验1/截屏2021-05-12 14.20.27.png" alt="截屏2021-05-12 14.20.27" style="zoom:50%;" />
+
+<p>上面那个教学项目是这个 <a target="_blank" rel="noopener" href="https://kitware.github.io/vtk-examples/site/Cxx/VisualizationAlgorithms/HeadBone/">HeadBone</a>。自己跑的话要把 main 函数里刚开始的 if 语句注释掉，然后把文件地址改成自己的路径。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">reader-&gt;<span class="built_in">SetFileName</span>(<span class="string">&quot;HeadBone/FullHead.mhd&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>这里有个注意的是 raw 文件和 mhd 文件要放到同一个文件夹下。</p>
+<p>效果这样</p>
+<img src="/Users/ava/0/Visualization/实验1/截屏2021-05-12 14.25.37.png" alt="截屏2021-05-12 14.25.37" style="zoom:50%;" />
+
+
+
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><p>尝试手动编译的时候还遇到了一些问题，比如注意 <code>VTK_USE_CARBON</code> 为 OFF，为了解决 mac 上和 Cocoa 冲突的问题。不过这个参数在我后来使用 CMake 图形界面编译看参数时发现最新版本的已经是 <code>VTK_USE_COCOA = ON</code> 了。看来大多数版本配置问题都是默认更新着的。</p>
+<p>还有 <code>Tools -&gt; CMake -&gt; Reset Cashe and Reload Project</code> 可以解决一些缓存的问题，比如重置 CMake 的 prefix path 什么的。</p>
+<p>至于 HomeBrew 的 <a href="mailto:&#118;&#x74;&#107;&#64;&#x38;&#46;&#x32;">&#118;&#x74;&#107;&#64;&#x38;&#46;&#x32;</a> 说是 keg-only 的，没有符号链接到 usr/local，反正 8.2 使用者就好好手动编译吧。</p>
+
+            <!--[if lt IE 9]><script>document.createElement('audio');</script><![endif]-->
+            <audio id="audio" loop="1" preload="auto" controls="controls" data-autoplay="false">
+                <source type="audio/mpeg" src="">
+            </audio>
+            
+                <ul id="audio-list" style="display:none">
+                    
+                        
+                            <li title='0' data-url='http://link.hhtjim.com/163/425570952.mp3'></li>
+                        
+                    
+                        
+                            <li title='1' data-url='http://link.hhtjim.com/163/425570952.mp3'></li>
+                        
+                    
+                </ul>
+            
+        </div>
+        
+    <div id='gitalk-container' class="comment link"
+		data-enable='false'
+        data-ae='false'
+        data-ci=''
+        data-cs=''
+        data-r=''
+        data-o=''
+        data-a=''
+        data-d='false'
+    >查看评论</div>
+
+
+    </div>
+    
+        <div class='side'>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#macOS-VTK-CLion-%E9%85%8D%E7%BD%AE%E5%AE%89%E8%A3%85%E7%9B%B8%E5%85%B3"><span class="toc-number">1.</span> <span class="toc-text">macOS + VTK + CLion 配置安装相关</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E6%AD%A5%E9%AA%A4"><span class="toc-number">1.1.</span> <span class="toc-text">安装步骤</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B6%E4%BB%96"><span class="toc-number">1.2.</span> <span class="toc-text">其他</span></a></li></ol></li></ol>	
+        </div>
+    
+</div>
+
+
+    </div>
+</div>
+</body>
+
+
+<script src="//lib.baomitu.com/jquery/1.8.3/jquery.min.js"></script>
+<script src="/js/plugin.js"></script>
+<script src="/js/typed.js"></script>
+<script src="/js/diaspora.js"></script>
+
+
+<link rel="stylesheet" href="/photoswipe/photoswipe.css">
+<link rel="stylesheet" href="/photoswipe/default-skin/default-skin.css">
+
+
+<script src="/photoswipe/photoswipe.min.js"></script>
+<script src="/photoswipe/photoswipe-ui-default.min.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <!--  Controls are self-explanatory. Order can be changed. -->
+                <div class="pswp__counter"></div>
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div> 
+            </div>
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+</html>
