@@ -1,6 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>QGLViewer从配置到放弃</title>
+    <url>/2021/05/24/QGLViewer%E4%BB%8E%E9%85%8D%E7%BD%AE%E5%88%B0%E6%94%BE%E5%BC%83/</url>
+    <content><![CDATA[<p>折腾了一周，因为之前也没用过 Qt 所以需要学的还挺多的。折腾来折腾去结果是老师下定论这玩意儿在 ARM 架构上不好搞，跟客户商量放弃了。（但我在 mac 上也没搞好啊啊啊）不过过程还是学到了一些的，不能白费一周。</p>
+<h4 id="Ubuntu"><a href="#Ubuntu" class="headerlink" title="Ubuntu"></a>Ubuntu</h4><p>老师的 Nvidia agx，ARM 架构，Ubuntu 18.04，Qt 5.9.5。</p>
+<p>照着<a href="http://libqglviewer.com/installUnix.html#linux">官网教程</a>配置，有个注意的点是整个文件要在 Linux 下解压。</p>
+<p>打开正确文件夹 <code>QGLViewer</code>，刚开始用 Qt 直接 build all 报错了，还找不到详细报错信息，就去用命令行。结果是 example 都在报错，后来看报错信息，找不到 .so 动态库，怀疑是没装 OpenGL。</p>
+<p>然后就去安装 OpenGL，教程【<a href="https://www.jianshu.com/p/7e7d938f22c6">1</a>】【<a href="https://crainyday.gitee.io/Ubuntu_004.html">2</a>】</p>
+<p>安装了 gl 再去试试，搞了个<a href="https://blog.csdn.net/Fox_Alex/article/details/80163942">demo</a>，果然是qt的问题。</p>
+<p>解决：<a href="https://blog.csdn.net/weixin_30533797/article/details/99915738?utm_medium=distribute.pc_relevant.none-task-blog-baidujs_baidulandingword-0&spm=1001.2101.3001.4242">Linux下安装QT和OpenGL后QT无法使用OpenGL的解决方法</a>，在 .pro 文件里加</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">LIBS = -lGL -lGLU -lglut</span><br></pre></td></tr></table></figure>
+
+
+
+<p>然后还是报错，说 libQGLViewer-qt5.so 里面啥函数都找不到，（结果这里走了点弯路）</p>
+<p>然后就去<a href="https://www.cnblogs.com/laowangxieboke/p/12657546.html">寻找.so文件</a></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt-get install apt-file</span><br><span class="line">apt-file update //这里不行就 sudo，我还怕出问题先去问了老师没问题才执行的orz</span><br><span class="line">apt-file search libXX.so</span><br></pre></td></tr></table></figure>
+
+<p>但是找不到，啥返回都没有。结果去补 linux <a href="https://lulaoshi.info/blog/compile-c-hello-world-on-linux.html">编译流程</a>和<a href="https://lulaoshi.info/blog/linux-dynamic-link-library.html">动态链接库</a>了。//这篇良心啊。</p>
+<p>然后看报错去找了<a href="https://stackoverflow.com/questions/43700038/dso-missing-from-command-line-qt">DSO missing from command line QT</a>，（这里就是自己的问题了）但还是报错，后来才明白是自己写的不对，那个lName，应该是 lGL.so。</p>
+<p>然后找到了<a href="http://c.biancheng.net/view/3901.html">这个</a>，原来是ubuntu把opengl的库放到 <code>/usr/lib/aarch64-linux-gnu/</code> 里了，一个解决办法是建立链接</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo ln -s /usr/lib/aarch64-linux-gnu/libGL.so.1 /usr/lib/libGL.so</span><br><span class="line">sudo ln -s /usr/lib/aarch64-linux-gnu/libGLU.so.1 /usr/lib/libGLU.so</span><br><span class="line">sudo ln -s /usr/lib/aarch64-linux-gnu/libglut.so.3 /usr/lib/libglut.so</span><br></pre></td></tr></table></figure>
+
+<p>然后在上级.pro文件中加</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">LIBS = -lGL -lGLU -lglut</span><br></pre></td></tr></table></figure>
+
+<p>就可以了。突然感觉按照之前QGLViewer说的加个那啥路径估计也行而且更方便。不过没去再找。</p>
+<p>然鹅现在虽然不报错了，但是跑出来的窗口一片黑，用 Qt 跑简单的带 GL 的 demo 也是黑窗，普通 gl 直接命令行编译的 demo 是可以的，普通 qt 的 Qwidget demo 也是可以的，说明是 qgl 的问题？（因为没解决所以我也不知道到底是不是orz）</p>
+<p>查来查去看<a href="https://blog.csdn.net/l523010415/article/details/80218436">这个</a>的评论怀疑是 opengl 和 qt 的版本问题，去看 OpenGL 的信息</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">nvidia@nvidia-desktop:~$ glxinfo | grep &#x27;version&#x27;</span><br><span class="line"></span><br><span class="line">server glx version string: 1.4</span><br><span class="line">client glx version string: 1.4</span><br><span class="line">GLX version: 1.4</span><br><span class="line">OpenGL core profile version string: 4.6.0 NVIDIA 32.1.0</span><br><span class="line">OpenGL core profile shading language version string: 4.60 NVIDIA</span><br><span class="line">OpenGL version string: 4.6.0 NVIDIA 32.1.0</span><br><span class="line">OpenGL shading language version string: 4.60 NVIDIA</span><br><span class="line">OpenGL ES profile version string: OpenGL ES 3.2 NVIDIA 32.1.0</span><br><span class="line">OpenGL ES profile shading language version string: OpenGL ES GLSL ES 3.20</span><br><span class="line">    GL_EXT_shader_group_vote, GL_EXT_shader_implicit_conversions, </span><br><span class="line"></span><br><span class="line">nvidia@nvidia-desktop:~$ qmake -v</span><br><span class="line">QMake version 3.1</span><br><span class="line">Using Qt version 5.9.5 in /usr/lib/aarch64-linux-gnu</span><br></pre></td></tr></table></figure>
+
+<p><a href="http://aicdg.com/oldblog/qt/2017/02/11/qt-opengl-version.html">这个</a>里面有说怎么设置和查看使用版本的方法。<a href="https://www.cnblogs.com/xiangtingshen/p/13261160.html">这个</a>也有说。</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Get Version Information</span></span><br><span class="line">    glType = (<span class="built_in">context</span>()-&gt;<span class="built_in">isOpenGLES</span>()) ? <span class="string">&quot;OpenGL ES&quot;</span> : <span class="string">&quot;OpenGL&quot;</span>;</span><br><span class="line">    glVersion = <span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> <span class="keyword">char</span>*&gt;(<span class="built_in">glGetString</span>(GL_VERSION));</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 设置 OpenGL 版本信息</span></span><br><span class="line"><span class="comment">// 注意: format 必须在 show() 调用前设置</span></span><br><span class="line">    QSurfaceFormat format;</span><br><span class="line">    format.<span class="built_in">setRenderableType</span>(QSurfaceFormat::OpenGL);</span><br><span class="line">    format.<span class="built_in">setProfile</span>(QSurfaceFormat::CoreProfile);</span><br><span class="line">    format.<span class="built_in">setVersion</span>(<span class="number">4</span>,<span class="number">3</span>);</span><br><span class="line">    MyOpenGLWidget w;</span><br><span class="line">    w.<span class="built_in">setFormat</span>(format);</span><br><span class="line">    w.<span class="built_in">show</span>();</span><br></pre></td></tr></table></figure>
+
+<p>输出的版本是</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">OpenGL ES OpenGL ES 3.2 NVIDIA 32.1.0 ( NoProfile )</span><br></pre></td></tr></table></figure>
+
+<p>去查 OpenGL ES 是怎么回事，说 OpenGL for Embedded Systems, 是 OpenGL 嵌入式设备版。</p>
+<p>有个报错是这样，</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">QEGLPlatformContext: Failed to create context: 3009</span><br></pre></td></tr></table></figure>
+
+<p>官网有这样的<a href="https://bugreports.qt.io/browse/QTBUG-53023">反馈</a>但是他大概是旧版本问题感觉不是我的问题。我都傻了，是QEGL的问题？我甚至开始怀疑是 gpu 没驱动或者版本问题，跑</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nvidia-smi</span><br></pre></td></tr></table></figure>
+
+<p>就报的这个<a href="https://blog.csdn.net/zhuguiqian/article/details/104795435">linux服务器上查看显卡(nvidia)型号</a>里面说的报错，我甚至去看了<a href="https://blog.csdn.net/u010592301/article/details/90452281">Ubuntu系统下安装NVIDIA驱动</a>和<a href="https://blog.csdn.net/qq_36383623/article/details/99174252">OpenGL与显卡驱动</a>orz</p>
+<p>后来问老师，老师说不可能这显卡刷机都自带的驱动，然后老师上手去搞了一天，得出结论</p>
+<blockquote>
+<p> 不用libQGLViewer这个库了   咱们直接调QT提供的openGL API</p>
+</blockquote>
+<p>绝了，真就从配置到放弃。</p>
+<h4 id="Mac"><a href="#Mac" class="headerlink" title="Mac"></a>Mac</h4><p>这个库也有问题，不过看报错大概是没跟上 SDK ，designer也是。Bug sur，不愧是你。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">:-1: error: Project ERROR: Could not resolve SDK SDKVersion for &#x27;macosx10.15&#x27; using --show-sdk-version</span><br></pre></td></tr></table></figure>
+
+<p>又是一个<a href="https://bugreports.qt.io/browse/QTBUG-87014">反馈</a>。反正我也不用它了。</p>
+<p>还有个mac上<a href="https://blog.csdn.net/scz653037148/article/details/110132173?utm_medium=distribute.pc_relevant.none-task-blog-2~default~BlogCommendFromBaidu~default-6.control&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2~default~BlogCommendFromBaidu~default-6.control">qmake路径配置</a>。不用这个库 Qt 自己的 GL 库在 mac 上都没问题。</p>
+]]></content>
+  </entry>
+  <entry>
+    <title>Hello World</title>
+    <url>/2021/05/13/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+]]></content>
+  </entry>
+  <entry>
     <title>macOS + VTK + CLion 配置安装相关</title>
     <url>/2021/05/13/macOS-VTK-CLion-%E9%85%8D%E7%BD%AE%E5%AE%89%E8%A3%85%E7%9B%B8%E5%85%B3/</url>
     <content><![CDATA[<p>本来挺简单一件事但还是踩了一些坑，记一下吧</p>
@@ -32,25 +109,7 @@
 
 <h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><p>尝试手动编译的时候还遇到了一些问题，比如注意 <code>VTK_USE_CARBON</code> 为 OFF，为了解决 mac 上和 Cocoa 冲突的问题。不过这个参数在我后来使用 CMake 图形界面编译看参数时发现最新版本的已经是 <code>VTK_USE_COCOA = ON</code> 了。看来大多数版本配置问题都是默认更新着的。</p>
 <p>还有 <code>Tools -&gt; CMake -&gt; Reset Cashe and Reload Project</code> 可以解决一些缓存的问题，比如重置 CMake 的 prefix path 什么的。</p>
-<p>至于 HomeBrew 的 <a href="mailto:&#118;&#x74;&#x6b;&#64;&#x38;&#x2e;&#x32;">&#118;&#x74;&#x6b;&#64;&#x38;&#x2e;&#x32;</a> 说是 keg-only 的，没有符号链接到 usr/local，反正 8.2 使用者就好好手动编译吧。</p>
-]]></content>
-  </entry>
-  <entry>
-    <title>Hello World</title>
-    <url>/2021/05/13/hello-world/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+<p>至于 HomeBrew 的 <a href="mailto:&#118;&#116;&#107;&#64;&#56;&#46;&#x32;">&#118;&#116;&#107;&#64;&#56;&#46;&#x32;</a> 说是 keg-only 的，没有符号链接到 usr/local，反正 8.2 使用者就好好手动编译吧。</p>
 ]]></content>
   </entry>
 </search>
