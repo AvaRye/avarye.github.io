@@ -1,6 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Hello World</title>
+    <url>/2021/05/13/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+]]></content>
+  </entry>
+  <entry>
+    <title>macOS + VTK + CLion 配置安装相关</title>
+    <url>/2021/05/13/macOS-VTK-CLion-%E9%85%8D%E7%BD%AE%E5%AE%89%E8%A3%85%E7%9B%B8%E5%85%B3/</url>
+    <content><![CDATA[<p>本来挺简单一件事但还是踩了一些坑，记一下吧</p>
+<p>（时隔多年再次尝试orz</p>
+<p><code>macOS 11.3.1</code> + <code>CLion</code> +<code> VTK 9.0.1_9</code></p>
+<h2 id="安装步骤"><a href="#安装步骤" class="headerlink" title="安装步骤"></a>安装步骤</h2><p>HomeBrew 还是香。虽然他默认安装 VTK 最新版本已经到 9.0.1 了，不过我是新学所以还没遇见什么问题。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">brew install vtk</span><br></pre></td></tr></table></figure>
+
+<p>最新的 vtk 要用 Qt@5，老版本的代码就可能会有一些问题，不过 HomeBrew 应该会也顺便安装上够用的 Qt@5。</p>
+<p>接下来就是我遇到的一个坑orz当时 CMakeList VTK 相关是这样的</p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">find_package</span>(VTK REQUIRED)</span><br><span class="line"><span class="keyword">include</span>(<span class="variable">$&#123;VTK_USE_FILE&#125;</span>)</span><br><span class="line"><span class="keyword">add_executable</span>(<span class="variable">$&#123;PROJECT_NAME&#125;</span> main.cpp)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(<span class="variable">$&#123;PROJECT_NAME&#125;</span> <span class="variable">$&#123;VTK_LIBRARIES&#125;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>结果找不到合适版本的 Qt，说不能用</p>
+<p>看报错他找到的是 conda 管理下安装的 Qt，解决办法是在前面加一行</p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">set</span>(CMAKE_PREFIX_PATH <span class="string">&quot;/usr/local/Cellar/qt@5/5.15.2&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>翻 CMake 手册知道这个的作用是提供一个根目录供 FIND_XXX() 命令在其中查找相应的文件。就是把 brew 管理的 Qt@5 的路径加进去。没有 Qt5 就去装一个版本够用的。brew 现在默认已经是 Qt6 了。</p>
+<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><p>这时候就可以了。跑测试代码的时候我拿到的代码渲染不出窗口来，不知道是不是版本的问题，参照一个教学项目的代码动了一下之后能跑出来了。</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;vtkRenderWindow.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;vtkSmartPointer.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;vtkRenderWindowInteractor.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    vtkSmartPointer&lt;vtkRenderWindow&gt; renWin = vtkSmartPointer&lt;vtkRenderWindow&gt;::<span class="built_in">New</span>();</span><br><span class="line">    vtkNew&lt;vtkRenderWindowInteractor&gt; iren;</span><br><span class="line">    iren-&gt;<span class="built_in">SetRenderWindow</span>(renWin);</span><br><span class="line">    renWin-&gt;<span class="built_in">Render</span>();</span><br><span class="line">    iren-&gt;<span class="built_in">Start</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面那个教学项目是这个 <a href="https://kitware.github.io/vtk-examples/site/Cxx/VisualizationAlgorithms/HeadBone/">HeadBone</a>。自己跑的话要把 main 函数里刚开始的 if 语句注释掉，然后把文件地址改成自己的路径。</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">reader-&gt;<span class="built_in">SetFileName</span>(<span class="string">&quot;HeadBone/FullHead.mhd&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>这里有个注意的是 raw 文件和 mhd 文件要放到同一个文件夹下。</p>
+<p>还有跑体绘制的项目时要加</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;vtkAutoInit.h&gt;</span></span></span><br><span class="line"><span class="built_in">VTK_MODULE_INIT</span>(vtkRenderingVolumeOpenGL2)</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><p>尝试手动编译的时候还遇到了一些问题，比如注意 <code>VTK_USE_CARBON</code> 为 OFF，为了解决 mac 上和 Cocoa 冲突的问题。不过这个参数在我后来使用 CMake 图形界面编译看参数时发现最新版本的已经是 <code>VTK_USE_COCOA = ON</code> 了。看来大多数版本配置问题都是默认更新着的。</p>
+<p>还有 <code>Tools -&gt; CMake -&gt; Reset Cashe and Reload Project</code> 可以解决一些缓存的问题，比如重置 CMake 的 prefix path 什么的。</p>
+<p>至于 HomeBrew 的 <a href="mailto:&#x76;&#x74;&#107;&#64;&#56;&#46;&#50;">&#x76;&#x74;&#107;&#64;&#56;&#46;&#50;</a> 说是 keg-only 的，没有符号链接到 usr/local，反正 8.2 使用者就好好手动编译吧。</p>
+]]></content>
+  </entry>
+  <entry>
     <title>QGLViewer从配置到放弃</title>
     <url>/2021/05/24/QGLViewer%E4%BB%8E%E9%85%8D%E7%BD%AE%E5%88%B0%E6%94%BE%E5%BC%83/</url>
     <content><![CDATA[<p>折腾了一周，因为之前也没用过 Qt 所以需要学的还挺多的。折腾来折腾去结果是老师下定论这玩意儿在 ARM 架构上不好搞，跟客户商量放弃了。（但我在 mac 上也没搞好啊啊啊）不过过程还是学到了一些的，不能白费一周。</p>
@@ -57,59 +110,6 @@
 
 <p>又是一个<a href="https://bugreports.qt.io/browse/QTBUG-87014">反馈</a>。反正我也不用它了。</p>
 <p>还有个mac上<a href="https://blog.csdn.net/scz653037148/article/details/110132173?utm_medium=distribute.pc_relevant.none-task-blog-2~default~BlogCommendFromBaidu~default-6.control&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2~default~BlogCommendFromBaidu~default-6.control">qmake路径配置</a>。不用这个库 Qt 自己的 GL 库在 mac 上都没问题。</p>
-]]></content>
-  </entry>
-  <entry>
-    <title>Hello World</title>
-    <url>/2021/05/13/hello-world/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-]]></content>
-  </entry>
-  <entry>
-    <title>macOS + VTK + CLion 配置安装相关</title>
-    <url>/2021/05/13/macOS-VTK-CLion-%E9%85%8D%E7%BD%AE%E5%AE%89%E8%A3%85%E7%9B%B8%E5%85%B3/</url>
-    <content><![CDATA[<p>本来挺简单一件事但还是踩了一些坑，记一下吧</p>
-<p>（时隔多年再次尝试orz</p>
-<p><code>macOS 11.3.1</code> + <code>CLion</code> +<code> VTK 9.0.1_9</code></p>
-<h2 id="安装步骤"><a href="#安装步骤" class="headerlink" title="安装步骤"></a>安装步骤</h2><p>HomeBrew 还是香。虽然他默认安装 VTK 最新版本已经到 9.0.1 了，不过我是新学所以还没遇见什么问题。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">brew install vtk</span><br></pre></td></tr></table></figure>
-
-<p>最新的 vtk 要用 Qt@5，老版本的代码就可能会有一些问题，不过 HomeBrew 应该会也顺便安装上够用的 Qt@5。</p>
-<p>接下来就是我遇到的一个坑orz当时 CMakeList VTK 相关是这样的</p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">find_package</span>(VTK REQUIRED)</span><br><span class="line"><span class="keyword">include</span>(<span class="variable">$&#123;VTK_USE_FILE&#125;</span>)</span><br><span class="line"><span class="keyword">add_executable</span>(<span class="variable">$&#123;PROJECT_NAME&#125;</span> main.cpp)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(<span class="variable">$&#123;PROJECT_NAME&#125;</span> <span class="variable">$&#123;VTK_LIBRARIES&#125;</span>)</span><br></pre></td></tr></table></figure>
-
-<p>结果找不到合适版本的 Qt，说不能用</p>
-<p>看报错他找到的是 conda 管理下安装的 Qt，解决办法是在前面加一行</p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">set</span>(CMAKE_PREFIX_PATH <span class="string">&quot;/usr/local/Cellar/qt@5/5.15.2&quot;</span>)</span><br></pre></td></tr></table></figure>
-
-<p>翻 CMake 手册知道这个的作用是提供一个根目录供 FIND_XXX() 命令在其中查找相应的文件。就是把 brew 管理的 Qt@5 的路径加进去。没有 Qt5 就去装一个版本够用的。brew 现在默认已经是 Qt6 了。</p>
-<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><p>这时候就可以了。跑测试代码的时候我拿到的代码渲染不出窗口来，不知道是不是版本的问题，参照一个教学项目的代码动了一下之后能跑出来了。</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;vtkRenderWindow.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;vtkSmartPointer.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;vtkRenderWindowInteractor.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    vtkSmartPointer&lt;vtkRenderWindow&gt; renWin = vtkSmartPointer&lt;vtkRenderWindow&gt;::<span class="built_in">New</span>();</span><br><span class="line">    vtkNew&lt;vtkRenderWindowInteractor&gt; iren;</span><br><span class="line">    iren-&gt;<span class="built_in">SetRenderWindow</span>(renWin);</span><br><span class="line">    renWin-&gt;<span class="built_in">Render</span>();</span><br><span class="line">    iren-&gt;<span class="built_in">Start</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>上面那个教学项目是这个 <a href="https://kitware.github.io/vtk-examples/site/Cxx/VisualizationAlgorithms/HeadBone/">HeadBone</a>。自己跑的话要把 main 函数里刚开始的 if 语句注释掉，然后把文件地址改成自己的路径。</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">reader-&gt;<span class="built_in">SetFileName</span>(<span class="string">&quot;HeadBone/FullHead.mhd&quot;</span>);</span><br></pre></td></tr></table></figure>
-
-<p>这里有个注意的是 raw 文件和 mhd 文件要放到同一个文件夹下。</p>
-<p>还有跑体绘制的项目时要加</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;vtkAutoInit.h&gt;</span></span></span><br><span class="line"><span class="built_in">VTK_MODULE_INIT</span>(vtkRenderingVolumeOpenGL2)</span><br></pre></td></tr></table></figure>
-
-
-
-<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><p>尝试手动编译的时候还遇到了一些问题，比如注意 <code>VTK_USE_CARBON</code> 为 OFF，为了解决 mac 上和 Cocoa 冲突的问题。不过这个参数在我后来使用 CMake 图形界面编译看参数时发现最新版本的已经是 <code>VTK_USE_COCOA = ON</code> 了。看来大多数版本配置问题都是默认更新着的。</p>
-<p>还有 <code>Tools -&gt; CMake -&gt; Reset Cashe and Reload Project</code> 可以解决一些缓存的问题，比如重置 CMake 的 prefix path 什么的。</p>
-<p>至于 HomeBrew 的 <a href="mailto:&#118;&#x74;&#x6b;&#x40;&#x38;&#46;&#x32;">&#118;&#x74;&#x6b;&#x40;&#x38;&#46;&#x32;</a> 说是 keg-only 的，没有符号链接到 usr/local，反正 8.2 使用者就好好手动编译吧。</p>
 ]]></content>
   </entry>
 </search>
