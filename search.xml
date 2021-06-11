@@ -1,6 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Hello World</title>
+    <url>/2021/05/13/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+]]></content>
+  </entry>
+  <entry>
     <title>QGLViewer从配置到放弃</title>
     <url>/2021/05/24/QGLViewer%E4%BB%8E%E9%85%8D%E7%BD%AE%E5%88%B0%E6%94%BE%E5%BC%83/</url>
     <content><![CDATA[<p>折腾了一周，因为之前也没用过 Qt 所以需要学的还挺多的。折腾来折腾去结果是老师下定论这玩意儿在 ARM 架构上不好搞，跟客户商量放弃了。（但我在 mac 上也没搞好啊啊啊）不过过程还是学到了一些的，不能白费一周。</p>
@@ -73,8 +91,6 @@
 <figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">find_package</span>(VTK REQUIRED)</span><br><span class="line"><span class="keyword">include</span>(<span class="variable">$&#123;VTK_USE_FILE&#125;</span>)</span><br><span class="line"><span class="keyword">add_executable</span>(<span class="variable">$&#123;PROJECT_NAME&#125;</span> main.cpp)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(<span class="variable">$&#123;PROJECT_NAME&#125;</span> <span class="variable">$&#123;VTK_LIBRARIES&#125;</span>)</span><br></pre></td></tr></table></figure>
 
 <p>结果找不到合适版本的 Qt，说不能用</p>
-<img src="macOS-VTK-CLion-配置安装相关/截屏2021-05-12 13.40.54.png" alt="截屏2021-05-12 13.40.54" style="zoom: 50%;" />
-
 <p>看报错他找到的是 conda 管理下安装的 Qt，解决办法是在前面加一行</p>
 <figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">set</span>(CMAKE_PREFIX_PATH <span class="string">&quot;/usr/local/Cellar/qt@5/5.15.2&quot;</span>)</span><br></pre></td></tr></table></figure>
 
@@ -86,8 +102,6 @@
 <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">reader-&gt;<span class="built_in">SetFileName</span>(<span class="string">&quot;HeadBone/FullHead.mhd&quot;</span>);</span><br></pre></td></tr></table></figure>
 
 <p>这里有个注意的是 raw 文件和 mhd 文件要放到同一个文件夹下。</p>
-<img src="macOS-VTK-CLion-配置安装相关/截屏2021-05-12 14.25.37.png" alt="截屏2021-05-12 14.25.37" style="zoom:50%;" />
-
 <p>还有跑体绘制的项目时要加</p>
 <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;vtkAutoInit.h&gt;</span></span></span><br><span class="line"><span class="built_in">VTK_MODULE_INIT</span>(vtkRenderingVolumeOpenGL2)</span><br></pre></td></tr></table></figure>
 
@@ -95,30 +109,9 @@
 
 <h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><p>尝试手动编译的时候还遇到了一些问题，比如注意 <code>VTK_USE_CARBON</code> 为 OFF，为了解决 mac 上和 Cocoa 冲突的问题。不过这个参数在我后来使用 CMake 图形界面编译看参数时发现最新版本的已经是 <code>VTK_USE_COCOA = ON</code> 了。看来大多数版本配置问题都是默认更新着的。</p>
 <p>还有 <code>Tools -&gt; CMake -&gt; Reset Cashe and Reload Project</code> 可以解决一些缓存的问题，比如重置 CMake 的 prefix path 什么的。</p>
-<p>至于 HomeBrew 的 <a href="mailto:&#118;&#x74;&#107;&#64;&#x38;&#x2e;&#x32;">&#118;&#x74;&#107;&#64;&#x38;&#x2e;&#x32;</a> 说是 keg-only 的，没有符号链接到 usr/local，反正 8.2 使用者就好好手动编译吧。</p>
+<p>至于 HomeBrew 的 <a href="mailto:&#118;&#116;&#x6b;&#x40;&#x38;&#x2e;&#50;">&#118;&#116;&#x6b;&#x40;&#x38;&#x2e;&#50;</a> 说是 keg-only 的，没有符号链接到 usr/local，反正 8.2 使用者就好好手动编译吧。</p>
  
 
-<img src="macOS-VTK-CLion-配置安装相关/no.png" alt="很难不赞同.jpg"  />
-
-<p>很难不赞同.jpg</p>
-]]></content>
-  </entry>
-  <entry>
-    <title>Hello World</title>
-    <url>/2021/05/13/hello-world/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
 ]]></content>
   </entry>
 </search>
